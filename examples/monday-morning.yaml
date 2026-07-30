@@ -1,0 +1,107 @@
+# A four-panel strip, which is what v0.1 exists to produce.
+#
+#   python examples/make_assets.py
+#   inkpy render examples/monday-morning.yaml -o out/monday.png
+#   inkpy render examples/monday-morning.yaml -o out/monday.png --wireframe
+#
+# Coordinates are normalized to their panel: origin bottom-left, y up, and a
+# character sits at the point under its feet.
+
+comic:
+  title: "Monday Morning"
+  page:
+    width: 1400
+    height: 1000
+    gutter: 18
+    margin: 28
+  layout: "2x2"
+  style: "default"
+
+  panels:
+    # The cat is up first, and has opinions about it.
+    - id: 1
+      background: kitchen
+      camera: medium
+      actors:
+        - character: cat
+          pose: sitting
+          expression: bored
+          at: [0.32, 0.06]
+          z: 1
+      objects:
+        - name: mug
+          at: [0.72, 0.10]
+          scale: 0.55
+          z: 0
+      dialogue:
+        - speaker: cat
+          text: "It is 6 a.m. and I have been awake for hours."
+
+    # Both of them, facing each other: one sprite set, one flip.
+    - id: 2
+      background: kitchen
+      camera: medium
+      actors:
+        - character: cat
+          pose: idle
+          expression: neutral
+          at: [0.26, 0.06]
+          z: 1
+        - character: human
+          pose: idle
+          expression: sleepy
+          at: [0.74, 0.06]
+          z: 0
+          flip: true
+      dialogue:
+        - speaker: cat
+          text: "Good morning."
+        - speaker: human
+          text: "It is not."
+
+    # The right-hand character speaks first, so the bubbles stack rather
+    # than crossing their tails.
+    - id: 3
+      background: kitchen
+      camera: medium
+      actors:
+        - character: cat
+          pose: sitting
+          expression: annoyed
+          at: [0.24, 0.06]
+          z: 1
+        - character: human
+          pose: idle
+          expression: neutral
+          at: [0.76, 0.06]
+          z: 0
+          flip: true
+      dialogue:
+        - speaker: human
+          text: "You knocked the mug off the counter again."
+        - speaker: cat
+          text: "I tested it. It fell."
+
+    # A wider shot to close on.
+    - id: 4
+      background: garden
+      camera: wide
+      actors:
+        - character: human
+          pose: idle
+          expression: happy
+          at: [0.40, 0.08]
+          z: 0
+        - character: cat
+          pose: idle
+          expression: neutral
+          at: [0.66, 0.08]
+          z: 1
+          flip: true
+      dialogue:
+        - text: "Outside, later."
+          type: narration
+        - speaker: human
+          text: "Truce?"
+        - speaker: cat
+          text: "Until the next mug."

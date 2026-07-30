@@ -10,6 +10,36 @@ strip.yaml + assets/  →  InkPy  →  strip.png
 
 ---
 
+## Quick start
+
+```bash
+pip install -e ".[dev]"
+
+python examples/make_assets.py          # draw the example library
+inkpy render examples/monday-morning.yaml -o out/monday.png
+inkpy render examples/monday-morning.yaml -o out/wire.png --wireframe
+```
+
+Assets are looked for in `assets/` beside the strip file unless `--assets`
+says otherwise.
+
+| Command | |
+|---|---|
+| `inkpy render strip.yaml` | render to PNG (also `-f svg`, `-f pdf`) |
+| `inkpy render … --wireframe` | overlay bounding boxes, anchors and reserved zones |
+| `inkpy watch strip.yaml` | re-render on every save |
+| `inkpy check strip.yaml` | validate and report layout warnings, write nothing |
+| `inkpy verify strip.yaml out.png` | confirm a render still matches its sources |
+| `inkpy assets list assets/` | what a library provides, ready to write against |
+| `inkpy schema -o strip.schema.json` | JSON Schema, for editor autocompletion |
+| `inkpy styles` | the style names a strip may use |
+
+Three example strips: `monday-morning.yaml` (a four-panel strip),
+`bubble-types.yaml` (the four bubble types), `effects.yaml` (frame weights and
+speed lines).
+
+---
+
 ## Why
 
 Generative image models produce beautiful isolated panels but fail at what actually makes a comic: keeping a character identical across panels, holding a consistent style, controlling composition, and reproducing exact dialogue.
@@ -217,7 +247,24 @@ comic:
 
 **`actors[].flip`** — horizontal mirror. Lets two characters face each other from a single set of sprites.
 
-**`dialogue[].type`** — `speech` (round bubble, pointed tail), `thought` (cloud bubble, bubble-trail tail), `shout` (spiked outline), `narration` (rectangular caption, no tail, pinned to a corner).
+**`dialogue[].type`** — `speech` (round bubble, pointed tail), `thought` (cloud bubble, bubble-trail tail), `shout` (spiked outline, one spike stretched into the tail), `narration` (rectangular caption, no tail, pinned to a corner).
+
+**`frame`** — `none` / `thin` / `normal` / `bold`. A multiplier on the style's border weight; `none` lets the panel bleed into the page.
+
+**`effects`** — a list of drawn flourishes. Only `speed_lines` so far, since it is the one effect whose entire content is a direction:
+
+```yaml
+effects:
+  - type: speed_lines
+    at: [0.62, 0.35]      # where the movement is heading
+    direction: right      # left | right | up | down
+    length: 0.5           # fraction of the panel, along the direction
+    spread: 0.42          # fraction of the panel, across it
+    count: 9
+    z: 0
+```
+
+The lines trail *back* from `at`, which is the convention: they record where the thing has been.
 
 **Dialogue order is reading order.** The engine places bubbles so their visual order (top→bottom, left→right) matches the array order. When that's geometrically impossible given the requested positions, it emits a warning rather than silently producing an unreadable panel.
 
@@ -225,14 +272,14 @@ comic:
 
 ## Bubble layout
 
-This is the trickiest piece of the project and the main driver of perceived quality. Target algorithm for v0.1:
+This is the trickiest piece of the project and the main driver of perceived quality.
 
-1. **Measure** — every line is measured with the final font (`PIL.ImageFont.getbbox()` or `fontTools`), never estimated. SVG provides no text metrics: measure upfront, then emit explicitly positioned `<tspan>` elements rather than depending on the viewer's rendering engine.
-2. **Break lines into an oval** — a comic bubble wants a rounded silhouette: short lines at the top and bottom, longer ones in the middle. Plain fixed-width wrapping yields a rectangle, which instantly gives away the automated render.
-3. **Reserve** — bubbles occupy the upper band of the panel by default (~35% of its height). That zone is subtracted from the available space before characters are placed.
-4. **Place** — respecting reading order, each bubble as close as possible to its speaker.
-5. **Resolve collisions** — bubble/bubble, bubble/face, bubble/panel edge. Strategies in order: shift horizontally, narrow the bubble (making it taller), move up, and only as a last resort drop the font one step within the style's limits.
-6. **Draw the tail** — a Bézier curve from the bubble edge to the speaker's `mouth_offset`, accounting for `flip`.
+1. **Measure** — every line is measured with the final font, via `fontTools`, never estimated. SVG provides no text metrics, so the same face that measures a line also draws it: text is emitted as glyph outlines, not as `<text>`. Nothing downstream gets to substitute a font.
+2. **Break lines into an oval** — a comic bubble wants a rounded silhouette: short lines at the top and bottom, longer ones in the middle. Plain fixed-width wrapping yields a rectangle, which instantly gives away the automated render — and costs area, because the ellipse around a rectangle is √2 larger on *both* axes. Each line therefore gets its own measure, taken from the ellipse's width at that line's height, and the words are distributed by a small paragraph-breaker rather than greedily. Several line counts are tried and the one with the smallest bubble wins; adding a line often shrinks the bubble, which a fixed-width wrapper can never discover.
+3. **Reserve** — bubbles claim the upper band of the panel (~35% of its height by default) *before* anything is placed. The share is a floor, not a ceiling: when the dialogue needs more it takes more.
+4. **Place** — respecting reading order, each bubble as close as possible to its speaker. Two bubbles share a row only when their speakers read left-to-right in the same order as the dialogue; otherwise they stack, so no two tails cross.
+5. **Resolve collisions** — strategies in order, cheapest first: shift horizontally, narrow the bubble (making it taller), lift the block into whatever slack the band has, and only as a last resort drop the font one step within the style's limits. A bubble that exhausts all four says so instead of sitting on a face.
+6. **Draw the tail** — a Bézier from the bubble edge to the speaker's `mouth_offset`, accounting for `flip`. Bubble and tail are emitted as one closed path: an ellipse drawn *over* a separate tail leaves its own outline running across the tail's neck, which is exactly how a machine-made bubble announces itself. A shout needs no special case — its tail is one of its own spikes, drawn longer.
 
 ---
 
@@ -285,7 +332,9 @@ The "same input → same output" promise has to be verifiable, not merely assert
 
 ## Assets and licensing
 
-Assets are supplied by the author and remain their responsibility. Examples shipped in this repository use only original characters or freely licensed assets — no copyrighted characters, not even for demonstration.
+Assets are supplied by the author and remain their responsibility. Examples shipped in this repository use only original characters or freely licensed assets — no copyrighted characters, not even for demonstration. The example library is not committed as artwork at all: `examples/make_assets.py` draws it, so what is under review is the code that produces the sprites rather than a pile of unreviewable PNGs.
+
+The one asset InkPy itself ships is a font. Reproducibility requires it: a face resolved from the system would make the same strip render differently on two machines. `inkpy/styles/fonts/` contains DejaVu Sans with its license (`LICENSE.txt`, Bitstream Vera).
 
 ---
 
@@ -305,34 +354,83 @@ SVG over Pillow for rendering: bubbles, Bézier tails and text are far simpler t
 
 ## Roadmap
 
-### v0.1 — A strip comes out
+### v0.1 — A strip comes out ✅
 
-**Single exit criterion: a 4-panel YAML file produces a legible PNG.**
+**Single exit criterion: a 4-panel YAML file produces a legible PNG.** Met —
+`examples/monday-morning.yaml` is that file, and `tests/test_cli.py` asserts it.
 
-- [ ] Pydantic schema for the strip format
-- [ ] Asset loading + character manifests
-- [ ] Layout templates
-- [ ] Body + face compositing, feet anchoring, `flip`, `z`-sorting
-- [ ] Bubbles: measuring, wrapping, placement, tail
-- [ ] `Scene` IR and SVG → PNG backend
-- [ ] `--wireframe` mode
-- [ ] Explicit validation error messages
+- [x] Pydantic schema for the strip format
+- [x] Asset loading + character manifests
+- [x] Layout templates
+- [x] Body + face compositing, feet anchoring, `flip`, `z`-sorting
+- [x] Bubbles: measuring, wrapping, placement, tail
+- [x] `Scene` IR and SVG → PNG backend
+- [x] `--wireframe` mode
+- [x] Explicit validation error messages
 
-### v0.2 — Render quality
+Three decisions were taken during the build that the spec above did not
+anticipate, and that are worth recording:
 
-- [ ] Bubble collision resolution
-- [ ] Oval line breaking
-- [ ] Bubble types: thought, shout, narration caption
-- [ ] Simple effects: speed lines, variable frame weight
-- [ ] PDF export
-- [ ] Style / theme system
+**The reserved band is a floor, not a fixed share.** `bubble_band` says how
+much of a panel bubbles get by default; when the dialogue needs more, it takes
+more, and characters shrink accordingly. Holding it as a hard limit would only
+have meant bubbles quietly spilling over the artwork. Reservation runs in two
+passes — place characters against the nominal band to find the speakers'
+mouths, measure the dialogue, then reserve for real.
 
-### v0.3 — Authoring comfort
+**Bubbles whose speakers stand in the wrong order are stacked, not placed side
+by side.** If the right-hand character speaks first, a single row would force
+the first bubble left and the second right, running both tails across each
+other. Stacking keeps each bubble over its own speaker and makes reading order
+top-to-bottom, which is unambiguous. This is the case the "emit a warning"
+note in *Strip format* was written for; there turned out to be a better answer
+than warning.
 
-- [ ] `inkpy watch`: re-render on save
-- [ ] JSON Schema export for editor autocompletion
-- [ ] Asset library inspection (`inkpy assets list`)
-- [ ] Reproducibility verification
+**Text is embedded as outlines, not as `<text>`.** Fonts ship inside the
+package, and the glyphs are emitted as paths built from those fonts, so no
+renderer anywhere gets to choose a substitute. It is what makes "same input,
+same output" true off the machine that rendered it.
+
+### v0.2 — Render quality ✅
+
+- [x] Bubble collision resolution
+- [x] Oval line breaking
+- [x] Bubble types: thought, shout, narration caption
+- [x] Simple effects: speed lines, variable frame weight
+- [x] PDF export
+- [x] Style / theme system
+
+Oval breaking turned out to be a packing win as well as a cosmetic one: it cuts
+7–23% off a bubble's area on the example strip, because the corners a rectangle
+of text wastes are corners the panel was paying for.
+
+It also forced a correction upstream. Reserving a full-width band and shrinking
+every character under it punished a character standing beneath a *gap* between
+two bubbles. The reservation now converges instead: place the cast against the
+nominal band to find their mouths, lay the bubbles out, then re-place the cast
+against the bubbles' own rectangles. A character only ever yields to the space
+above itself.
+
+The one place the IR could have lied is worth recording. A thought bubble's
+scallops bulge outward, so drawing them naively would put ink outside the
+rectangle the layout engine reserved — and every assertion made against that
+rectangle would have been wrong by exactly that margin. Instead the bubble is
+inflated by the scallop depth in layout, and the renderer draws the peaks out to
+the edge. The IR stays the truth about the page.
+
+### v0.3 — Authoring comfort ✅
+
+- [x] `inkpy watch`: re-render on save
+- [x] JSON Schema export for editor autocompletion
+- [x] Asset library inspection (`inkpy assets list`)
+- [x] Reproducibility verification
+
+`watch` polls modification times rather than subscribing to filesystem events:
+one fewer dependency, and imperceptible at this scale. It does not stop on an
+error, because a half-finished edit is the normal state of a file being watched.
+
+The JSON Schema is derived from the Pydantic models, not maintained alongside
+them, so an editor's autocompletion cannot drift from what the engine accepts.
 
 ### Rejected ideas
 

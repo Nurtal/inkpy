@@ -1,0 +1,56 @@
+# The four bubble types, one per panel.
+#
+#   inkpy render examples/bubble-types.yaml -o out/bubbles.png
+#
+# Each type has its own silhouette and its own way of pointing at whoever is
+# responsible for it: a pointed tail, a trail of puffs, a longer spike, or
+# nothing at all.
+
+comic:
+  title: "Four ways to say something"
+  page:
+    width: 1400
+    height: 420
+    gutter: 16
+    margin: 24
+  layout: "4x1"
+
+  panels:
+    - id: 1
+      background: kitchen
+      camera: wide
+      actors:
+        - {character: cat, pose: sitting, expression: neutral, at: [0.5, 0.05]}
+      dialogue:
+        - speaker: cat
+          text: "Speech. A round bubble with a pointed tail."
+          type: speech
+
+    - id: 2
+      background: kitchen
+      camera: wide
+      actors:
+        - {character: cat, pose: sitting, expression: bored, at: [0.5, 0.05]}
+      dialogue:
+        - speaker: cat
+          text: "Thought. A cloud, and a trail of puffs."
+          type: thought
+
+    - id: 3
+      background: kitchen
+      camera: wide
+      actors:
+        - {character: human, pose: idle, expression: happy, at: [0.5, 0.05]}
+      dialogue:
+        - speaker: human
+          text: "SHOUT! Spikes, and one of them reaches down!"
+          type: shout
+
+    - id: 4
+      background: garden
+      camera: wide
+      actors:
+        - {character: cat, pose: idle, expression: annoyed, at: [0.5, 0.05]}
+      dialogue:
+        - text: "Narration. A caption in the corner, pointing at nobody."
+          type: narration

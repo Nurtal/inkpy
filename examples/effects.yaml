@@ -1,0 +1,65 @@
+# Frame weight and speed lines.
+#
+#   inkpy render examples/effects.yaml -o out/effects.png
+#
+# Both are things an engine can add without pretending to draw: one is a
+# stroke width, the other is a direction.
+
+comic:
+  title: "Two flourishes"
+  page:
+    width: 1400
+    height: 420
+    gutter: 16
+    margin: 24
+  layout: "4x1"
+
+  panels:
+    # A thin frame reads as a quiet beat.
+    - id: 1
+      background: garden
+      camera: wide
+      frame: thin
+      actors:
+        - {character: cat, pose: sitting, expression: neutral, at: [0.5, 0.06]}
+      dialogue:
+        - {text: "A thin frame.", type: narration}
+
+    # Speed lines trail behind the point they are aimed at.
+    - id: 2
+      background: garden
+      camera: wide
+      actors:
+        - {character: cat, pose: idle, expression: annoyed, at: [0.68, 0.06]}
+      effects:
+        - type: speed_lines
+          at: [0.62, 0.35]
+          direction: right
+          length: 0.5
+          spread: 0.42
+          count: 9
+
+    # Bold frame, and lines running the other way.
+    - id: 3
+      background: garden
+      camera: wide
+      frame: bold
+      actors:
+        - {character: cat, pose: idle, expression: annoyed, at: [0.3, 0.06], flip: true}
+      effects:
+        - type: speed_lines
+          at: [0.36, 0.35]
+          direction: left
+          length: 0.5
+          spread: 0.42
+          count: 9
+
+    # No frame at all: the panel bleeds into the page.
+    - id: 4
+      background: garden
+      camera: wide
+      frame: none
+      actors:
+        - {character: human, pose: idle, expression: happy, at: [0.5, 0.06]}
+      dialogue:
+        - {text: "No frame at all.", type: narration}
