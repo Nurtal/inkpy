@@ -12,16 +12,20 @@ dependencies = [
     "pydantic>=2.6",
     "pyyaml>=6.0",
     "pillow>=10.0",
-    "lxml>=5.0",
+    # Text is measured and emitted as glyph outlines, never as <text>. Both
+    # halves of that promise live in inkpy/styles/typeface.py and need this.
+    "fonttools>=4.40",
     "typer>=0.12",
     "cairosvg>=2.7",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+# lxml parses the rendered SVG in the render tests. The engine writes SVG by
+# hand and never reads it back, so it is not a runtime dependency.
+dev = ["pytest>=8.0", "lxml>=5.0"]
 
 [project.scripts]
-inkpy = "inkpy.cli:app"
+inkpy = "inkpy.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["inkpy*"]
