@@ -23,6 +23,44 @@ inkpy render examples/monday-morning.yaml -o out/wire.png --wireframe
 Assets are looked for in `assets/` beside the strip file unless `--assets`
 says otherwise.
 
+### Smoke test
+
+The shortest path from a fresh clone to a comic, and the thing to run when
+something looks broken. One panel, one character, one bubble — four commands,
+each of which should print exactly what is shown after it:
+
+```bash
+pip install -e ".[dev]"
+
+python examples/hello/make_hello.py
+# wrote the hello library to examples/hello/assets
+
+inkpy check examples/hello/hello.yaml
+# examples/hello/hello.yaml: 1 panels, 1 bubbles, 0 warnings
+
+inkpy render examples/hello/hello.yaml -o out/hello.png
+# out/hello.png (800x600, 1 panels)
+
+inkpy verify examples/hello/hello.yaml out/hello.png
+# out/hello.png matches examples/hello/hello.yaml.
+```
+
+Each step isolates a layer, so a failure says where the problem is: the
+generator is Pillow only, `check` is parsing, validation and layout with no
+renderer involved, `render` adds SVG and rasterisation, `verify` reads the
+provenance back out of the PNG.
+
+`tests/test_smoke.py` runs these same four steps against a library it draws in
+a temporary directory — including a check that this section still lists them —
+so the procedure cannot rot while the README goes on recommending it:
+
+```bash
+pytest tests/test_smoke.py
+```
+
+`examples/hello/hello.yaml` is also the smallest thing to copy when starting a
+strip of your own.
+
 | Command | |
 |---|---|
 | `inkpy render strip.yaml` | render to PNG (also `-f svg`, `-f pdf`) |
@@ -34,9 +72,9 @@ says otherwise.
 | `inkpy schema -o strip.schema.json` | JSON Schema, for editor autocompletion |
 | `inkpy styles` | the style names a strip may use |
 
-Three example strips: `monday-morning.yaml` (a four-panel strip),
-`bubble-types.yaml` (the four bubble types), `effects.yaml` (frame weights and
-speed lines).
+Four example strips: `hello/hello.yaml` (one panel, the smoke test below),
+`monday-morning.yaml` (a four-panel strip), `bubble-types.yaml` (the four
+bubble types), `effects.yaml` (frame weights and speed lines).
 
 ---
 
@@ -315,6 +353,7 @@ inkpy/
 - **Layout is tested against the IR**, not against images: "no bubble covers a `head_anchor`", "bubbles are in reading order", "every actor is inside its panel bounds", "z-sorting is stable".
 - **Render tests are few and deliberate**: two or three golden pages, compared with tolerance. One render test per feature is a maintenance trap.
 - **Validation errors are tested for their message.** `Character 'cat' has no pose 'flying'. Available poses: idle, sitting, walking.` beats a `KeyError`.
+- **One end-to-end smoke test** (`tests/test_smoke.py`) runs the four-command procedure from *Quick start* for real — generator, `check`, `render`, `verify` — over a library it draws in a temporary directory. It is the only test that never skips for want of assets, and the only one whose job is to fail when the *instructions* stop being true.
 
 ---
 

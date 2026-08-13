@@ -1,0 +1,34 @@
+# The smallest strip InkPy can render: one panel, one character, one bubble.
+#
+# The smoke test, from a fresh clone:
+#
+#   pip install -e ".[dev]"
+#   python examples/hello/make_hello.py
+#   inkpy check  examples/hello/hello.yaml
+#   inkpy render examples/hello/hello.yaml -o out/hello.png
+#   inkpy verify examples/hello/hello.yaml out/hello.png
+#
+# tests/test_smoke.py runs exactly those steps, so the procedure cannot quietly
+# stop working while the README still recommends it.
+#
+# Everything omitted here is a default: pose 'idle', expression 'neutral',
+# type 'speech', style 'default', frame 'normal', z 0.
+
+comic:
+  title: "Hello, InkPy"
+  page:
+    width: 800
+    height: 600
+  layout: "1x1"
+
+  panels:
+    - id: 1
+      background: room
+      camera: medium
+      actors:
+        # Feet on the ground, a little left of centre. Origin bottom-left.
+        - character: blob
+          at: [0.42, 0.06]
+      dialogue:
+        - speaker: blob
+          text: "If you can read this, the pipeline works."

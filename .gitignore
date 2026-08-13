@@ -12,5 +12,8 @@ tests/test_render/_failed/
 # so the sprites it draws are not committed. Run it once before rendering.
 examples/assets/
 
+# Likewise drawn by examples/hello/make_hello.py, for the README's smoke test.
+examples/hello/assets/
+
 # Likewise cut from examples/rats/sheets/ by examples/rats/make_rats.py.
 examples/rats/assets/
