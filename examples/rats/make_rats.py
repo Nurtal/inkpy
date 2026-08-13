@@ -28,6 +28,11 @@ sprites of one character is the drawing, which is the whole point.
 Effects — the anger bolts, the steam, the surprise marks — ride along with the
 body, since they scale and move with it.
 
+The two backdrops at the end of this file are the one thing here that is drawn
+rather than cut: the sheets are model sheets and carry no scenery. They are
+kept deliberately faint, and on the same paper tone as the sheets, so that they
+sit behind the cast instead of competing with it.
+
 Run it from the repository root. The measuring is done with numpy, which the
 engine itself does not use, so it comes with the ``examples`` extra::
 
@@ -42,7 +47,7 @@ from pathlib import Path
 
 import numpy as np
 import yaml
-from PIL import Image
+from PIL import Image, ImageDraw
 
 HERE = Path(__file__).parent
 SHEETS_DIR = HERE / "sheets"
@@ -371,6 +376,167 @@ def manifest_for(cast: Cast, built: dict) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Backdrops
+# ---------------------------------------------------------------------------
+#
+# The sheets are model sheets: four characters, no scenery. So unlike the cast,
+# the two backgrounds are drawn here rather than cut, and the whole problem is
+# not to draw well but to draw *faintly*. A backdrop competes with the sprites
+# in front of it for the reader's attention, and these sprites are graphite on
+# cream — a flat vector room behind them would win that competition and read as
+# a collage of two different pictures.
+#
+# So: the paper the sheets were drawn on for the ground, one grey for what is
+# near and a lighter one for what is far, thin strokes, nothing filled darker
+# than the paper except where an object has to read as solid.
+
+PAPER = (248, 244, 238, 255)
+"""Sampled from the margins of the sheets, so the backdrop and the cutouts sit
+on the same tone."""
+
+NEAR = (104, 101, 98, 255)
+FAR = (168, 165, 160, 255)
+BACKDROP = (1200, 800)
+BACK_SS = 3
+
+
+class Pen:
+    """A drawing surface that hides the supersampling."""
+
+    def __init__(self, size: tuple[int, int], background=PAPER) -> None:
+        self.size = size
+        self.image = Image.new(
+            "RGBA", (size[0] * BACK_SS, size[1] * BACK_SS), background
+        )
+        self.draw = ImageDraw.Draw(self.image)
+
+    def _box(self, box):
+        return tuple(value * BACK_SS for value in box)
+
+    def rect(self, box, fill=None, outline=NEAR, width=3) -> None:
+        self.draw.rectangle(self._box(box), fill=fill, outline=outline, width=width * BACK_SS)
+
+    def rounded(self, box, radius, fill=None, outline=NEAR, width=3) -> None:
+        self.draw.rounded_rectangle(
+            self._box(box), radius=radius * BACK_SS, fill=fill, outline=outline,
+            width=width * BACK_SS,
+        )
+
+    def line(self, points, fill=NEAR, width=3) -> None:
+        self.draw.line(
+            [(x * BACK_SS, y * BACK_SS) for x, y in points],
+            fill=fill, width=width * BACK_SS, joint="curve",
+        )
+
+    def ellipse(self, box, fill=None, outline=NEAR, width=3) -> None:
+        self.draw.ellipse(self._box(box), fill=fill, outline=outline, width=width * BACK_SS)
+
+    def arc(self, box, start, end, fill=NEAR, width=3) -> None:
+        self.draw.arc(self._box(box), start, end, fill=fill, width=width * BACK_SS)
+
+    def save(self, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        self.image.resize(self.size, Image.LANCZOS).save(path, optimize=True)
+
+
+def office() -> Pen:
+    """Where the strip happens: a window, a whiteboard, a desk, a plant."""
+    pen = Pen(BACKDROP)
+    floor = 600
+
+    # The wall meets the floor here. Everything above is far, and drawn lighter.
+    pen.line([(0, floor), (1200, floor)], fill=NEAR, width=3)
+
+    pen.rounded((90, 140, 420, 400), radius=4, outline=FAR, width=4)
+    pen.line([(255, 140), (255, 400)], fill=FAR, width=3)
+    pen.line([(90, 270), (420, 270)], fill=FAR, width=3)
+
+    # A whiteboard, and on it the only chart this office ever draws.
+    pen.rect((640, 150, 1090, 400), fill=(252, 250, 246, 255), outline=FAR, width=4)
+    pen.line(
+        [(690, 220), (790, 300), (860, 250), (940, 340), (1040, 360)],
+        fill=FAR, width=3,
+    )
+    pen.line([(690, 200), (690, 370)], fill=FAR, width=2)
+    pen.line([(690, 370), (1050, 370)], fill=FAR, width=2)
+
+    # A desk against the far wall, with a monitor asleep on it.
+    pen.line([(700, 520), (1150, 520)], fill=NEAR, width=4)
+    pen.line([(720, 520), (720, 600)], fill=NEAR, width=3)
+    pen.line([(1130, 520), (1130, 600)], fill=NEAR, width=3)
+    pen.rounded((860, 400, 1010, 500), radius=6, outline=NEAR, width=3)
+    pen.line([(935, 500), (935, 520)], fill=NEAR, width=4)
+    pen.line([(890, 520), (980, 520)], fill=NEAR, width=4)
+
+    # A plant, because every office has exactly one and nobody waters it.
+    # Below the window, never across it: a leaf crossing a mullion reads as a
+    # mistake rather than as a plant.
+    pen.line([(118, 600), (132, 528), (188, 528), (202, 600)], fill=NEAR, width=3)
+    pen.line([(136, 544), (184, 544)], fill=NEAR, width=2)
+    for tip, radius in (
+        ((104, 476), (26, 17)),
+        ((136, 442), (23, 15)),
+        ((172, 436), (25, 16)),
+        ((204, 466), (24, 16)),
+        ((160, 490), (22, 14)),
+    ):
+        # The stem stops at the leaf rather than running through it.
+        pen.line(
+            [(160, 528), (160 + (tip[0] - 160) * 0.82, 528 + (tip[1] - 528) * 0.82)],
+            fill=FAR,
+            width=2,
+        )
+        pen.ellipse(
+            (tip[0] - radius[0], tip[1] - radius[1], tip[0] + radius[0], tip[1] + radius[1]),
+            outline=FAR,
+            width=2,
+        )
+
+    _floor(pen, floor)
+    return pen
+
+
+def _floor(pen: Pen, horizon: int, vanishing_x: int = 600) -> None:
+    """A few lines receding to a point, rather than a ruled grid.
+
+    Evenly spaced horizontals read as lined paper, which is the one thing this
+    backdrop must not look like: the cast is already drawn on paper, and the
+    room has to sit behind them rather than beside them.
+    """
+    for edge_x in (-500, 150, 620, 1080, 1750):
+        pen.line([(vanishing_x, horizon), (edge_x, pen.size[1])], fill=FAR, width=2)
+
+
+def server_room() -> Pen:
+    """Where the build server lives, and where the shouting comes from."""
+    pen = Pen(BACKDROP)
+    floor = 640
+
+    pen.line([(0, floor), (1200, floor)], fill=NEAR, width=3)
+
+    # Three racks, the middle one closer and so drawn darker.
+    for left, top, ink in ((120, 230, FAR), (450, 190, NEAR), (800, 220, FAR)):
+        width = 280
+        pen.rect((left, top, left + width, floor), outline=ink, width=4)
+        # Rack units, with a light on each. Regular, because a rack is regular
+        # and the eye reads the repetition faster than it reads any detail.
+        for row in range(top + 34, floor - 20, 44):
+            pen.line([(left + 12, row), (left + width - 12, row)], fill=ink, width=2)
+            pen.rect(
+                (left + 22, row + 12, left + 34, row + 22), fill=ink, outline=ink, width=1
+            )
+
+    # A cable tray overhead, with what always hangs off it. Kept clear of the
+    # racks: a cable crossing a rack front is a cable nobody can read.
+    pen.line([(0, 60), (1200, 60)], fill=FAR, width=4)
+    for x in range(70, 1200, 170):
+        pen.arc((x, 60, x + 130, 150), 0, 180, fill=FAR, width=3)
+
+    _floor(pen, floor)
+    return pen
+
+
 def main() -> None:
     sheets = {name: read_sheet(name) for name in SHEETS}
     for cast in CAST:
@@ -386,6 +552,9 @@ def main() -> None:
         width, height = built["size"]
         scales = ", ".join(f"{n} x{s:.3f}" for n, s in built["scales"].items())
         print(f"{cast.name:<10} {width}x{height}  body {built['body_height']}px  [{scales}]")
+
+    office().save(OUT / "backgrounds" / "office.png")
+    server_room().save(OUT / "backgrounds" / "server-room.png")
 
     print(f"\nwrote the rat library to {OUT}")
 

@@ -25,6 +25,7 @@ comic:
   panels:
     # The junior has met non-determinism and does not yet know its name.
     - id: 1
+      background: office
       camera: wide
       actors:
         - {character: junior, pose: surprise, at: [0.30, 0.05]}
@@ -36,6 +37,7 @@ comic:
           text: "Same seed?"
 
     - id: 2
+      background: office
       camera: wide
       actors:
         - {character: junior, pose: general, at: [0.30, 0.05]}
@@ -50,6 +52,7 @@ comic:
     # character, a heavier frame and a bigger rat: this is where the strip
     # turns, and the panel says so before the words do.
     - id: 3
+      background: server-room
       camera: wide
       frame: bold
       actors:
@@ -62,6 +65,7 @@ comic:
           type: shout
 
     - id: 4
+      background: office
       camera: wide
       actors:
         - {character: scientist, pose: rire, at: [0.30, 0.05]}

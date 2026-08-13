@@ -393,7 +393,7 @@ Three generators draw the libraries the examples render against, and none of wha
 |---|---|
 | `python examples/hello/make_hello.py` | one character, for the smoke test |
 | `python examples/make_assets.py` | the cat and the human of `monday-morning.yaml` |
-| `python examples/rats/make_rats.py` | the cast of the two `rats/` strips, cut out of the pencil sheets in `examples/rats/sheets/` — those *are* committed, being the source the script works from |
+| `python examples/rats/make_rats.py` | the cast of the two `rats/` strips, cut out of the pencil sheets in `examples/rats/sheets/` — those *are* committed, being the source the script works from — plus two backdrops, which the sheets do not carry and which are therefore drawn |
 
 The generators are not part of the engine, but they are run from this repository, so they are installable from it: `pip install -e ".[examples]"`. Only the last one needs it — it measures the sheets with numpy, so that every expression of a character lands at exactly the same size.
 

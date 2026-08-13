@@ -26,6 +26,7 @@ comic:
 
   panels:
     - id: 1
+      background: office
       camera: wide
       actors:
         - {character: senior, pose: general, at: [0.5, 0.04]}
@@ -35,6 +36,7 @@ comic:
 
     # Gone before the sentence lands.
     - id: 2
+      background: office
       camera: wide
       actors:
         - {character: junior, pose: rire, at: [0.70, 0.04], scale: 0.8}
@@ -53,6 +55,7 @@ comic:
         - {speaker: junior, text: "Deployed!"}
 
     - id: 3
+      background: server-room
       camera: wide
       frame: bold
       actors:
@@ -61,6 +64,7 @@ comic:
         - {speaker: devops, text: "ROLL IT BACK.", type: shout}
 
     - id: 4
+      background: office
       camera: wide
       actors:
         - {character: scientist, pose: rire, at: [0.5, 0.04]}
