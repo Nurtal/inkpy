@@ -1,0 +1,74 @@
+# A four-panel strip drawn from the rat cast in this directory.
+#
+#   pip install -e ".[examples]"
+#   python examples/rats/make_rats.py
+#   inkpy render examples/rats/same-seed.yaml -o out/same-seed.png
+#
+# The library is cut from the pencil sheets in sheets/ and lands in assets/,
+# beside this file, which is where the engine looks by default.
+#
+# These characters carry their expression in the pose rather than in a face
+# layer: the sheets were drawn one emotion at a time, so 'angry' and 'rire'
+# are poses here, and the library reports no expressions at all. Nothing in
+# the format changes — a strip never names an expression it does not have.
+
+comic:
+  title: "Same seed"
+  page:
+    width: 1400
+    height: 1000
+    gutter: 18
+    margin: 28
+  layout: "2x2"
+  style: "default"
+
+  panels:
+    # The junior has met non-determinism and does not yet know its name.
+    - id: 1
+      camera: wide
+      actors:
+        - {character: junior, pose: surprise, at: [0.30, 0.05]}
+        - {character: senior, pose: general, at: [0.72, 0.05], flip: true}
+      dialogue:
+        - speaker: junior
+          text: "The score moved. Same data, same code."
+        - speaker: senior
+          text: "Same seed?"
+
+    - id: 2
+      camera: wide
+      actors:
+        - {character: junior, pose: general, at: [0.30, 0.05]}
+        - {character: senior, pose: general, at: [0.72, 0.05], flip: true}
+      dialogue:
+        - speaker: junior
+          text: "Same seed."
+        - speaker: senior
+          text: "Same machine?"
+
+    # The answer arrives from the other end of the office, uninvited. One
+    # character, a heavier frame and a bigger rat: this is where the strip
+    # turns, and the panel says so before the words do.
+    - id: 3
+      camera: wide
+      frame: bold
+      actors:
+        # Bigger than the wide camera gives, without reaching into the shout:
+        # scale replaces the camera's factor for this actor only.
+        - {character: devops, pose: angry, at: [0.5, 0.05], scale: 0.66}
+      dialogue:
+        - speaker: devops
+          text: "WHO IS TRAINING ON THE BUILD SERVER?"
+          type: shout
+
+    - id: 4
+      camera: wide
+      actors:
+        - {character: scientist, pose: rire, at: [0.30, 0.05]}
+        - {character: junior, pose: surprise, at: [0.72, 0.05], flip: true}
+      dialogue:
+        - speaker: scientist
+          text: "It reproduces perfectly. One machine at a time."
+        - speaker: junior
+          text: "I am writing this one down."
+          type: thought
