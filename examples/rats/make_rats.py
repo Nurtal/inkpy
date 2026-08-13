@@ -28,8 +28,10 @@ sprites of one character is the drawing, which is the whole point.
 Effects — the anger bolts, the steam, the surprise marks — ride along with the
 body, since they scale and move with it.
 
-Run it from the repository root::
+Run it from the repository root. The measuring is done with numpy, which the
+engine itself does not use, so it comes with the ``examples`` extra::
 
+    pip install -e ".[examples]"
     python examples/rats/make_rats.py
 """
 

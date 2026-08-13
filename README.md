@@ -383,6 +383,16 @@ names the flag that would make the check meaningful.
 
 Assets are supplied by the author and remain their responsibility. Examples shipped in this repository use only original characters or freely licensed assets — no copyrighted characters, not even for demonstration. The example library is not committed as artwork at all: `examples/make_assets.py` draws it, so what is under review is the code that produces the sprites rather than a pile of unreviewable PNGs.
 
+Three generators draw the libraries the examples render against, and none of what they produce is committed:
+
+| Generator | Library |
+|---|---|
+| `python examples/hello/make_hello.py` | one character, for the smoke test |
+| `python examples/make_assets.py` | the cat and the human of `monday-morning.yaml` |
+| `python examples/rats/make_rats.py` | four characters cut out of the pencil sheets in `examples/rats/sheets/`, which *are* committed — they are the source the script works from |
+
+The generators are not part of the engine, but they are run from this repository, so they are installable from it: `pip install -e ".[examples]"`. Only the last one needs it — it measures the sheets with numpy, so that every expression of a character lands at exactly the same size.
+
 The one asset InkPy itself ships is a font. Reproducibility requires it: a face resolved from the system would make the same strip render differently on two machines. `inkpy/styles/fonts/` contains DejaVu Sans with its license (`LICENSE.txt`, Bitstream Vera).
 
 ---

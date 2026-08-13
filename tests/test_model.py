@@ -130,6 +130,36 @@ class TestFieldErrors:
             parse(MINIMAL.replace("character: cat", "character: Cat"))
         assert "lowercase" in str(exc.value)
 
+    def test_one_typo_is_one_problem(self):
+        """Pydantic drops the panel that failed, then calls the strip empty.
+
+        The report used to open with "2 problems" and end on a second line
+        the author could do nothing about: the panel is only missing because
+        of the typo named on the line above.
+        """
+        with pytest.raises(ScriptError) as exc:
+            parse(MINIMAL.replace("expression: bored", "expresion: bored"))
+        message = str(exc.value)
+        assert "(1 problem)" in message
+        assert "unknown field" in message
+        assert "comic.panels:" not in message
+
+    def test_a_strip_with_no_panels_is_still_reported(self):
+        """Nothing failed inside it, so the empty tuple is the real problem."""
+        with pytest.raises(ScriptError) as exc:
+            parse(
+                """
+                comic:
+                  title: t
+                  page: {width: 800, height: 400}
+                  layout: "1x1"
+                  panels: []
+                """
+            )
+        message = str(exc.value)
+        assert "(1 problem)" in message
+        assert "comic.panels: too few entries: at least 1 required, 0 given." in message
+
     def test_all_problems_are_reported_at_once(self):
         with pytest.raises(ScriptError) as exc:
             parse(
@@ -171,7 +201,7 @@ class TestCrossFieldRules:
                 "comic:\n  title: t\n  page: {width: 800, height: 400}\n"
                 '  layout: "2x2"\n  panels:\n' + panels
             )
-        assert "at most 4" in str(exc.value)
+        assert "too many entries: at most 4 allowed, 5 given." in str(exc.value)
 
     def test_duplicate_panel_ids(self):
         with pytest.raises(ScriptError, match="panel id 1 is used more than once"):

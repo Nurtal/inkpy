@@ -24,6 +24,13 @@ dependencies = [
 # hand and never reads it back, so it is not a runtime dependency.
 dev = ["pytest>=8.0", "lxml>=5.0"]
 
+# The asset generators under examples/. They stand in for an author with a pen
+# and are not part of the engine, but they are run from this repository and so
+# have to be installable from it. Pillow and PyYAML they share with the engine;
+# examples/rats/make_rats.py measures the sheets it cuts with numpy, which
+# nothing declared — on a clean install the script simply failed at import.
+examples = ["numpy>=1.24"]
+
 [project.scripts]
 inkpy = "inkpy.cli:main"
 

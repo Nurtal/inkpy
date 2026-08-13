@@ -72,12 +72,39 @@ def parse_script(text: str, source: str = "<string>") -> ComicScript:
 
 def format_validation_error(exc: ValidationError, source: str) -> str:
     """Turn a Pydantic error into an author-facing report."""
-    problems = exc.errors()
+    problems = _without_consequences(exc.errors())
     plural = "" if len(problems) == 1 else "s"
     lines = [f"{source} is not a valid strip ({len(problems)} problem{plural}):"]
     for problem in problems:
         lines.append(f"  {_location(problem['loc'])}: {_message(problem)}")
     return "\n".join(lines)
+
+
+def _without_consequences(problems: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Drop the errors that are only side effects of other errors.
+
+    Pydantic removes an item that failed validation and *then* checks how many
+    are left, so one misspelt field inside the only panel of a strip is
+    reported twice: once where it is, and once as ``panels`` being empty. The
+    second is not a problem the author has — fixing it is not even possible —
+    and counting it made the report open by claiming two.
+
+    Only a length complaint about a container that already has a failing child
+    is dropped. A genuinely empty ``panels:`` has no child to blame and is
+    reported as itself.
+    """
+    locations = [problem["loc"] for problem in problems]
+    return [
+        problem
+        for problem in problems
+        if problem.get("type") != "too_short"
+        or not any(_is_inside(loc, problem["loc"]) for loc in locations)
+    ]
+
+
+def _is_inside(loc: tuple[Any, ...], container: tuple[Any, ...]) -> bool:
+    """Is ``loc`` strictly below ``container`` in the document tree?"""
+    return len(loc) > len(container) and loc[: len(container)] == container
 
 
 def _location(loc: tuple[Any, ...]) -> str:
@@ -110,4 +137,15 @@ def _message(problem: dict[str, Any]) -> str:
             "asset names must be lowercase letters, digits, '_' or '-', "
             f"and start with a letter or digit (got {problem.get('input')!r})."
         )
+    if kind in {"too_short", "too_long"}:
+        # Pydantic says "Tuple should have at most 4 items after validation",
+        # and "after validation" is a fact about the validator, not about the
+        # file. The author wants the two numbers.
+        context = problem.get("ctx", {})
+        given = context.get("actual_length", "?")
+        if kind == "too_short":
+            least = context.get("min_length", 1)
+            return f"too few entries: at least {least} required, {given} given."
+        most = context.get("max_length", "?")
+        return f"too many entries: at most {most} allowed, {given} given."
     return message
