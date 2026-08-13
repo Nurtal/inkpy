@@ -72,11 +72,13 @@ strip of your own.
 | `inkpy schema -o strip.schema.json` | JSON Schema, for editor autocompletion |
 | `inkpy styles` | the style names a strip may use |
 
-Five example strips: `hello/hello.yaml` (one panel, the smoke test below),
+Six example strips: `hello/hello.yaml` (one panel, the smoke test below),
 `monday-morning.yaml` (a four-panel strip), `bubble-types.yaml` (the four
-bubble types), `effects.yaml` (frame weights and speed lines), and
-`rats/same-seed.yaml`, which is drawn from a cast cut out of real pencil
-sheets rather than from generated shapes.
+bubble types), `effects.yaml` (frame weights and speed lines), and two under
+`rats/`, drawn from a cast cut out of real pencil sheets rather than from
+generated shapes: `same-seed.yaml` on a `2x2` grid, and `friday-deploy.yaml`
+in the horizontal `4x1` format, where the panels are barely wider than a
+bubble is allowed to be.
 
 ---
 
@@ -391,7 +393,7 @@ Three generators draw the libraries the examples render against, and none of wha
 |---|---|
 | `python examples/hello/make_hello.py` | one character, for the smoke test |
 | `python examples/make_assets.py` | the cat and the human of `monday-morning.yaml` |
-| `python examples/rats/make_rats.py` | the cast of `rats/same-seed.yaml`, cut out of the pencil sheets in `examples/rats/sheets/` — those *are* committed, being the source the script works from |
+| `python examples/rats/make_rats.py` | the cast of the two `rats/` strips, cut out of the pencil sheets in `examples/rats/sheets/` — those *are* committed, being the source the script works from |
 
 The generators are not part of the engine, but they are run from this repository, so they are installable from it: `pip install -e ".[examples]"`. Only the last one needs it — it measures the sheets with numpy, so that every expression of a character lands at exactly the same size.
 

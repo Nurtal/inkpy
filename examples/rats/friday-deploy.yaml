@@ -1,0 +1,68 @@
+# The classic horizontal strip: four narrow panels, read left to right.
+#
+#   pip install -e ".[examples]"
+#   python examples/rats/make_rats.py
+#   inkpy render examples/rats/friday-deploy.yaml -o out/friday.png
+#
+# A 4x1 page is the layout that puts the most pressure on bubble placement:
+# each panel is barely wider than a bubble is allowed to be, so the lines have
+# to be short and the engine has nowhere to shift a bubble sideways. Anything
+# that would collide here has to be solved by breaking the text differently.
+#
+# It is also where the two flourishes belong. A narration caption opens the
+# strip because a caption is how a strip states a time without spending a
+# panel on it, and the speed lines in panel 2 record a direction — they trail
+# back from where the movement is heading, which is the convention.
+
+comic:
+  title: "Friday deploy"
+  page:
+    width: 1600
+    height: 460
+    gutter: 14
+    margin: 24
+  layout: "4x1"
+  style: "default"
+
+  panels:
+    - id: 1
+      camera: wide
+      actors:
+        - {character: senior, pose: general, at: [0.5, 0.04]}
+      dialogue:
+        - {text: "Friday, 17:58.", type: narration}
+        - {speaker: senior, text: "Nobody deploys."}
+
+    # Gone before the sentence lands.
+    - id: 2
+      camera: wide
+      actors:
+        - {character: junior, pose: rire, at: [0.70, 0.04], scale: 0.8}
+      effects:
+        # Behind him, not across him: effects are drawn in front of the
+        # artwork, so the only way to keep them off a character is to aim
+        # them past it. 'at' is where the movement is heading; the lines
+        # trail back from there.
+        - type: speed_lines
+          at: [0.56, 0.28]
+          direction: right
+          length: 0.42
+          spread: 0.26
+          count: 8
+      dialogue:
+        - {speaker: junior, text: "Deployed!"}
+
+    - id: 3
+      camera: wide
+      frame: bold
+      actors:
+        - {character: devops, pose: angry, at: [0.5, 0.04], scale: 0.58}
+      dialogue:
+        - {speaker: devops, text: "ROLL IT BACK.", type: shout}
+
+    - id: 4
+      camera: wide
+      actors:
+        - {character: scientist, pose: rire, at: [0.5, 0.04]}
+      dialogue:
+        - {speaker: scientist, text: "It fails the same way every time."}
