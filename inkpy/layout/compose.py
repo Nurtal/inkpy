@@ -56,6 +56,7 @@ def build_scene(
         panels=tuple(panels),
         engine_version=__version__,
         asset_fingerprint=library.fingerprint(used),
+        script_fingerprint=script.fingerprint(),
         background_colour=theme.page_colour,
     )
 

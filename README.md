@@ -364,8 +364,18 @@ The "same input → same output" promise has to be verifiable, not merely assert
 - fonts embedded in the package, never resolved from the system;
 - no sources of randomness in layout;
 - iteration over ordered collections only;
-- asset hashes and the InkPy version written into PNG/PDF metadata;
-- an `inkpy verify strip.yaml out.png` command that recomputes and compares the hash.
+- every input written into the PNG's metadata: the engine version, the style, a hash of the sprites used, and a hash of the strip itself;
+- an `inkpy verify strip.yaml out.png` command that recomputes all four from the sources and compares.
+
+The strip's hash is taken from the validated script rather than from the
+file's bytes, so it answers the question worth asking. A reworded line, a
+moved actor, a different bubble type move it; a comment, a rearranged mapping
+or a default spelled out in full do not. A fingerprint that went off on those
+would only teach people to ignore it.
+
+`--style` is part of it because it is part of the render: an image made with
+`-s compact` does not match the strip as written, and `verify` says so and
+names the flag that would make the check meaningful.
 
 ---
 

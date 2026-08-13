@@ -225,6 +225,53 @@ class TestCrossFieldRules:
             parse(MINIMAL.replace("height: 900}", "height: 900, margin: 600}"))
 
 
+class TestFingerprint:
+    """What ``inkpy verify`` compares a render against.
+
+    The line to hold is between meaning and spelling: everything that reaches
+    the page moves the hash, everything that only changes how the file reads
+    leaves it alone.
+    """
+
+    def test_the_same_strip_hashes_the_same(self):
+        assert parse(MINIMAL).fingerprint() == parse(MINIMAL).fingerprint()
+
+    def test_a_reworded_line_moves_it(self):
+        """The case the fingerprint exists for: verify used to miss this."""
+        reworded = MINIMAL.replace("I am awake.", "I am awake, regrettably.")
+        assert parse(reworded).fingerprint() != parse(MINIMAL).fingerprint()
+
+    @pytest.mark.parametrize(
+        "change",
+        [
+            ('title: "Monday Morning"', 'title: "Tuesday"'),
+            ("at: [0.30, 0.10]", "at: [0.60, 0.10]"),
+            ("pose: sitting", "pose: idle"),
+            ("expression: bored", "expression: happy"),
+            ("width: 1200", "width: 1400"),
+            ("speaker: cat", "speaker: cat\n          type: thought"),
+        ],
+    )
+    def test_anything_that_reaches_the_page_moves_it(self, change):
+        assert parse(MINIMAL.replace(*change)).fingerprint() != parse(MINIMAL).fingerprint()
+
+    @pytest.mark.parametrize(
+        "change",
+        [
+            ('title: "Monday Morning"', 'title: "Monday Morning"  # a comment'),
+            ("layout: \"1x1\"", "layout: '1x1'"),
+            ("      background: kitchen", "      background: kitchen\n      camera: medium"),
+        ],
+    )
+    def test_rewriting_the_file_does_not(self, change):
+        """A comment, a quoting style, a default spelled out: not changes.
+
+        A fingerprint that moved on these would go off constantly and teach
+        people to ignore it, which is worse than not having one.
+        """
+        assert parse(MINIMAL.replace(*change)).fingerprint() == parse(MINIMAL).fingerprint()
+
+
 class TestEnums:
     def test_unknown_layout_lists_the_closed_set(self):
         with pytest.raises(ScriptError) as exc:

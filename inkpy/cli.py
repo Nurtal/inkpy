@@ -24,9 +24,15 @@ from inkpy import __version__
 from inkpy.assets.library import AssetLibrary
 from inkpy.errors import InkPyError
 from inkpy.layout.compose import build_scene
+from inkpy.layout.scene import Scene
 from inkpy.model.loader import ROOT_KEY, load_script
 from inkpy.model.script import ComicScript
 from inkpy.render.raster import (
+    ASSETS_KEY,
+    SCRIPT_KEY,
+    STYLE_KEY,
+    TITLE_KEY,
+    VERSION_KEY,
     read_provenance,
     render_pdf,
     render_png,
@@ -152,17 +158,27 @@ def verify(
     strip: Annotated[Path, typer.Argument(help="The strip the render claims to come from.")],
     image: Annotated[Path, typer.Argument(help="The PNG to check.")],
     assets: Annotated[Path | None, typer.Option("--assets", "-a")] = None,
+    style: Annotated[
+        str | None,
+        typer.Option("--style", "-s", help="The style the image was rendered with, if not the strip's."),
+    ] = None,
 ) -> None:
     """Check that a PNG still matches its strip and its assets.
 
-    "Same input, same output" is worth stating only if it can be checked. The
-    engine version and a hash of every sprite used are written into the PNG at
-    render time; this recomputes them from the sources and compares.
+    "Same input, same output" is worth stating only if it can be checked. Four
+    things are written into the PNG at render time — the engine version, the
+    style, a hash of every sprite used and a hash of the strip itself — and
+    this recomputes all four from the sources and compares.
+
+    The strip's hash is the one that makes the check worth running: without it
+    a reworded line of dialogue passed as a match, because the artwork it was
+    spoken over had not moved.
     """
     try:
         script = load_script(strip)
         library = AssetLibrary.load(_resolve_assets(strip, assets))
-        scene = build_scene(script, library)
+        theme = get_style(style) if style else None
+        scene = build_scene(script, library, theme)
         stamped = read_provenance(image)
     except InkPyError as exc:
         _fail(str(exc))
@@ -173,21 +189,17 @@ def verify(
         return
 
     problems: list[str] = []
-    if stamped.get("inkpy:assets") != scene.asset_fingerprint:
+    if stamped.get(ASSETS_KEY) != scene.asset_fingerprint:
         problems.append(
-            f"assets differ: the image was rendered from {stamped.get('inkpy:assets', '?')[:12]}…, "
+            f"assets differ: the image was rendered from {stamped.get(ASSETS_KEY, '?')[:12]}…, "
             f"the library now hashes to {scene.asset_fingerprint[:12]}…"
         )
-    if stamped.get("inkpy:version") != scene.engine_version:
+    if stamped.get(VERSION_KEY) != scene.engine_version:
         problems.append(
-            f"engine differs: rendered with {stamped.get('inkpy:version', '?')}, "
+            f"engine differs: rendered with {stamped.get(VERSION_KEY, '?')}, "
             f"running {scene.engine_version}"
         )
-    if stamped.get("inkpy:title") != scene.title:
-        problems.append(
-            f"title differs: image says {stamped.get('inkpy:title', '?')!r}, "
-            f"strip says {scene.title!r}"
-        )
+    problems.extend(_strip_problems(stamped, scene, strip))
 
     if problems:
         for problem in problems:
@@ -195,6 +207,43 @@ def verify(
         _fail(f"{image} is out of date with respect to {strip}.")
         return
     typer.secho(f"{image} matches {strip}.", fg=typer.colors.GREEN)
+
+
+def _strip_problems(stamped: dict[str, str], scene: Scene, strip: Path) -> list[str]:
+    """What the image says it was rendered from, against what the strip says now.
+
+    One message per cause. The title is part of the strip's hash, so a
+    retitled strip already fails the general check — but "title differs" in
+    those words is worth saying, and saying it twice is not.
+    """
+    problems: list[str] = []
+
+    stamped_style = stamped.get(STYLE_KEY)
+    if stamped_style != scene.style.name:
+        named = repr(stamped_style) if stamped_style else "a style it did not record"
+        hint = f" Re-check with --style {stamped_style}." if stamped_style else ""
+        problems.append(
+            f"style differs: the image was rendered with {named}, "
+            f"this check used {scene.style.name!r}.{hint}"
+        )
+
+    if stamped.get(TITLE_KEY) != scene.title:
+        problems.append(
+            f"title differs: image says {stamped.get(TITLE_KEY, '?')!r}, "
+            f"strip says {scene.title!r}"
+        )
+    elif SCRIPT_KEY not in stamped:
+        problems.append(
+            "the image records no hash of the strip it came from, so what it "
+            "says cannot be checked. Re-render it."
+        )
+    elif stamped[SCRIPT_KEY] != scene.script_fingerprint:
+        problems.append(
+            f"the strip differs: the image was rendered from content hashing to "
+            f"{stamped[SCRIPT_KEY][:12]}…, {strip} now hashes to "
+            f"{scene.script_fingerprint[:12]}…"
+        )
+    return problems
 
 
 @app.command()

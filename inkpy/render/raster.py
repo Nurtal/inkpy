@@ -1,10 +1,14 @@
 """SVG to PNG and PDF.
 
 Rasterisation is delegated; what this module owns is the promise around it.
-The render carries its own provenance — the engine version and a hash of every
-sprite that went into it — written into the file's metadata rather than kept
-in a sidecar that can drift. ``verify`` reads it back and says whether a PNG
-still matches the strip and the assets it claims to come from.
+The render carries its own provenance — the engine version, the style, a hash
+of every sprite that went into it and a hash of the strip that described it —
+written into the file's metadata rather than kept in a sidecar that can drift.
+``verify`` reads it back and says whether a PNG still matches the strip and the
+assets it claims to come from.
+
+All four are needed to answer that question. The sprites alone leave the strip
+itself unchecked, which made a reworded line of dialogue pass as a match.
 
 Nothing here reads the clock. A PNG produced twice from the same inputs is the
 same PNG, byte for byte, which is a property that has to be testable to be
@@ -23,6 +27,8 @@ from inkpy.layout.scene import Scene
 
 VERSION_KEY = "inkpy:version"
 ASSETS_KEY = "inkpy:assets"
+SCRIPT_KEY = "inkpy:script"
+STYLE_KEY = "inkpy:style"
 TITLE_KEY = "inkpy:title"
 
 
@@ -34,6 +40,8 @@ def render_png(scene: Scene, svg: str, path: str | Path, scale: float = 1.0) -> 
     info = PngImagePlugin.PngInfo()
     info.add_text(VERSION_KEY, scene.engine_version)
     info.add_text(ASSETS_KEY, scene.asset_fingerprint)
+    info.add_text(SCRIPT_KEY, scene.script_fingerprint)
+    info.add_text(STYLE_KEY, scene.style.name)
     info.add_text(TITLE_KEY, scene.title)
 
     with Image.open(io.BytesIO(raw)) as image:

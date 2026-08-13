@@ -102,6 +102,8 @@ class TestProvenance:
         stamped = read_provenance(render(scene, svg, tmp_path))
         assert stamped["inkpy:version"] == scene.engine_version
         assert stamped["inkpy:assets"] == scene.asset_fingerprint
+        assert stamped["inkpy:script"] == scene.script_fingerprint
+        assert stamped["inkpy:style"] == scene.style.name
         assert stamped["inkpy:title"] == "Monday Morning"
 
     def test_a_foreign_png_carries_none(self, tmp_path):

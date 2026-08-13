@@ -11,6 +11,7 @@ would surface as a wrong render hours later; a hard error surfaces now.
 
 from __future__ import annotations
 
+import hashlib
 from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -214,6 +215,23 @@ class ComicScript(Base):
                 )
             seen.append(panel.id)
         return self
+
+    def fingerprint(self) -> str:
+        """A hash of everything in the strip that can change the render.
+
+        Taken from the validated model, not from the file's bytes. A comment,
+        a reordered mapping, a different way of quoting a string or a default
+        written out in full are not changes to the strip, and a fingerprint
+        that flagged them would teach people to ignore it. Change a word of
+        dialogue, move an actor, swap a bubble type, and it moves.
+
+        Field order comes from the class rather than from the file, so this is
+        stable for a given engine version — and ``inkpy verify`` compares the
+        engine version too, which is what covers the case of the models
+        themselves changing shape.
+        """
+        canonical = self.model_dump_json()
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
     def panel(self, panel_id: int) -> Panel:
         for candidate in self.panels:

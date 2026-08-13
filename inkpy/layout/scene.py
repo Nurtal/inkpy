@@ -173,6 +173,12 @@ class Scene:
     asset_fingerprint: str
     """Hash of every sprite that went into this scene, for ``inkpy verify``."""
 
+    script_fingerprint: str
+    """Hash of the strip that produced it, likewise. Both halves are needed:
+    the assets answer "is the artwork still what it was", this one answers
+    "is this still what the strip says", and a render is stale if either has
+    moved."""
+
     background_colour: str = "#ffffff"
     warnings: tuple[str, ...] = field(default_factory=tuple)
 

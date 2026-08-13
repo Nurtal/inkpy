@@ -11,7 +11,7 @@ import textwrap
 from pathlib import Path
 
 import pytest
-from PIL import Image
+from PIL import Image, PngImagePlugin
 from typer.testing import CliRunner
 
 from inkpy.cli import app
@@ -180,6 +180,83 @@ class TestVerify:
         result = run("verify", str(project), str(out))
         assert result.exit_code == 1
         assert "assets differ" in result.output
+
+    def test_a_reworded_line_fails_verification(self, project, tmp_path):
+        """The check the assets hash cannot make: same artwork, other words."""
+        out = tmp_path / "out.png"
+        run("render", str(project), "-o", str(out))
+        project.write_text(
+            textwrap.dedent(STRIP).replace('"Mm."', '"Mm. Indeed."'), encoding="utf-8"
+        )
+        result = run("verify", str(project), str(out))
+        assert result.exit_code == 1
+        assert "the strip differs" in result.output
+
+    def test_a_moved_actor_fails_verification(self, project, tmp_path):
+        out = tmp_path / "out.png"
+        run("render", str(project), "-o", str(out))
+        project.write_text(
+            textwrap.dedent(STRIP).replace("at: [0.35, 0.08]", "at: [0.65, 0.08]"),
+            encoding="utf-8",
+        )
+        result = run("verify", str(project), str(out))
+        assert result.exit_code == 1
+        assert "the strip differs" in result.output
+
+    def test_a_retitled_strip_says_so_in_those_words(self, project, tmp_path):
+        """A title change is a strip change, reported as the specific one."""
+        out = tmp_path / "out.png"
+        run("render", str(project), "-o", str(out))
+        project.write_text(
+            textwrap.dedent(STRIP).replace("Two panels", "Two panels, revised"),
+            encoding="utf-8",
+        )
+        result = run("verify", str(project), str(out))
+        assert result.exit_code == 1
+        assert "title differs" in result.output
+        assert "the strip differs" not in result.output
+
+    def test_editing_a_comment_still_verifies(self, project, tmp_path):
+        """The fingerprint is of the strip's meaning, not of its bytes."""
+        out = tmp_path / "out.png"
+        run("render", str(project), "-o", str(out))
+        project.write_text(
+            "# rendered before this comment existed\n" + textwrap.dedent(STRIP),
+            encoding="utf-8",
+        )
+        result = run("verify", str(project), str(out))
+        assert result.exit_code == 0, result.output
+
+    def test_a_render_in_another_style_is_not_a_match(self, project, tmp_path):
+        """Same strip, same assets, different pixels: verify has to notice."""
+        out = tmp_path / "compact.png"
+        run("render", str(project), "-s", "compact", "-o", str(out))
+        result = run("verify", str(project), str(out))
+        assert result.exit_code == 1
+        assert "style differs" in result.output
+        assert "--style compact" in result.output
+
+    def test_the_style_it_was_rendered_with_verifies(self, project, tmp_path):
+        out = tmp_path / "compact.png"
+        run("render", str(project), "-s", "compact", "-o", str(out))
+        result = run("verify", str(project), str(out), "-s", "compact")
+        assert result.exit_code == 0, result.output
+
+    def test_an_image_without_a_script_hash_cannot_be_checked(self, project, tmp_path):
+        """A render from before the strip was fingerprinted: say so, don't pass it."""
+        out = tmp_path / "out.png"
+        run("render", str(project), "-o", str(out))
+        stripped = tmp_path / "old.png"
+        info = PngImagePlugin.PngInfo()
+        for key, value in read_provenance(out).items():
+            if key != "inkpy:script":
+                info.add_text(key, value)
+        with Image.open(out) as image:
+            image.save(stripped, format="PNG", pnginfo=info)
+
+        result = run("verify", str(project), str(stripped))
+        assert result.exit_code == 1
+        assert "records no hash of the strip" in result.output
 
     def test_a_foreign_png_is_reported_as_such(self, project, tmp_path):
         alien = tmp_path / "alien.png"
