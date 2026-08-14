@@ -1,0 +1,77 @@
+# "Extra careful" — the senior gives a lecture he is about to fail.
+#
+# Written from the entry of the same name in stories.md. It borrows the rat
+# cast, which lives beside the example that generated it, so the library has
+# to be named explicitly:
+#
+#   python examples/rats/make_rats.py
+#   inkpy render stories/extra-careful.yaml -a examples/rats/assets -o out/extra-careful.png
+#
+# The notes call the third character the analyst; on these sheets that rat is
+# 'scientist'. Their poses carry the emotion, so 'normal', 'happy' and
+# 'surprise' map onto the poses general, rire and surprise.
+#
+# The senior holds the left of every panel. He is the one the strip is about,
+# the other two arrive and leave around him, and keeping him put is what makes
+# the last panel land on the same rat that opened the lecture.
+
+comic:
+  title: "Extra careful"
+  page:
+    width: 1400
+    height: 1000
+    gutter: 18
+    margin: 28
+  layout: "2x2"
+  style: "default"
+
+  panels:
+    - id: 1
+      background: office
+      camera: wide
+      actors:
+        - {character: senior, pose: general, at: [0.28, 0.05]}
+        - {character: junior, pose: rire, at: [0.72, 0.05], flip: true}
+      dialogue:
+        - speaker: senior
+          text: "You have to be extra careful when vibe coding."
+        - speaker: junior
+          text: "Oh! Sure!"
+
+    # The scientist is already in the frame, off to the side and smaller for
+    # the distance. He says nothing yet; he is only walking over.
+    - id: 2
+      background: office
+      camera: wide
+      actors:
+        - {character: senior, pose: general, at: [0.22, 0.05]}
+        - {character: junior, pose: surprise, at: [0.55, 0.05], flip: true}
+        - {character: scientist, pose: general, at: [0.87, 0.05], scale: 0.38, flip: true}
+      dialogue:
+        - speaker: senior
+          text: "Review every single commit, like I do."
+        - speaker: junior
+          text: "That's a lot of work!"
+
+    # The junior has gone. One line, and a rat who does not answer it.
+    - id: 3
+      background: office
+      camera: wide
+      actors:
+        - {character: senior, pose: general, at: [0.30, 0.05]}
+        - {character: scientist, pose: general, at: [0.72, 0.05], flip: true}
+      dialogue:
+        - speaker: senior
+          text: "What's up?"
+
+    - id: 4
+      background: office
+      camera: wide
+      actors:
+        - {character: senior, pose: general, at: [0.30, 0.05]}
+        - {character: scientist, pose: general, at: [0.72, 0.05], flip: true}
+      dialogue:
+        - speaker: scientist
+          text: "You pushed your holiday photos to prod last night."
+        - speaker: senior
+          text: "Oh..."
