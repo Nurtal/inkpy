@@ -28,3 +28,32 @@ characters : senior + analyst
 background : open space
 analyst (normal) : You pushed your holidays photo on prod branch last night
 senior (normal) : Oh ...
+
+## Powerful AI
+Le senior data scientist revient d'une réunion avec le CEO de l'hopital, il devait faire la démo d'un RAG qui fait de la veille biblio sur le web, fait matcher les infos avec les profils des chercheurs
+et envoie automatiquement les infos par mail aux chercheurs identifié comme potentiellement intérésse par l'infos retrouvée, le CEO retient que l'IA peut envoyer un mail automatiquement
+### structure
+#### case 1
+characters: senior + analyst + devops
+background: open space
+senior (normal) : I presented our RAG poc
+analyst (normal) : to the CEO ?
+devops (normal) : 
+#### case 2
+characters: senior + analyst + devops
+background: open space
+senior (normal) : Yep
+analyst (normal) : He was impressed ?
+devops (normal) : 
+#### case 3
+characters: senior + analyst + devops
+background: open space
+senior (normal) : Yep
+analyst (normal) : Great !
+devops (normal) : He should
+#### case 4
+characters: senior + analyst + devops
+background: open space
+senior (normal) : By the automatic mail sending
+analyst (surprised) : 
+devops (angry) :

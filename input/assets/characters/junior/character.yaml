@@ -1,0 +1,34 @@
+name: junior
+anchor: feet
+default_height: 0.5408
+flippable: true
+poses:
+  general:
+    head_anchor:
+    - 0.4995
+    - 0.7145
+    mouth_offset:
+    - 0.4995
+    - 0.6846
+  angry:
+    head_anchor:
+    - 0.4995
+    - 0.7145
+    mouth_offset:
+    - 0.4995
+    - 0.6846
+  rire:
+    head_anchor:
+    - 0.4995
+    - 0.7145
+    mouth_offset:
+    - 0.4995
+    - 0.6846
+  surprise:
+    head_anchor:
+    - 0.4995
+    - 0.7145
+    mouth_offset:
+    - 0.4995
+    - 0.6846
+expressions: []
